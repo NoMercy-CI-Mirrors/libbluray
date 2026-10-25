@@ -82,8 +82,6 @@ endif
 
 if host_machine.cpu_family() == 'x86_64'
     java_arch = 'amd64'
-elif host_machine.cpu_family() == 'aarch64'
-    java_arch = 'arm'
 elif host_machine.cpu_family() == 'x86'
     java_arch = 'i386'
 else
