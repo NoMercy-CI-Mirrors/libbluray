@@ -685,6 +685,9 @@ static int _link_at(HDMV_VM *p, int playitem, int playmark)
         _queue_event(p, HDMV_EVENT_PLAY_PM, playmark);
     }
 
+    /* link commands end the execution of button commands (like BREAK) */
+    p->pc = 1 << 17;
+
     return 0;
 }
 
