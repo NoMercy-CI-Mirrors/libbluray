@@ -413,6 +413,7 @@ public class Libbluray {
         if (nativePointer == 0) {
             return;
         }
+        shuttingDown = true;
         try {
             stopTitle(true);
             BDJLoader.shutdown();
@@ -445,6 +446,7 @@ public class Libbluray {
             System.err.println("cleanup failed: " + e + "\n" + Logger.dumpStack(e));
         }
         nativePointer = 0;
+        shuttingDown = false;
         titleInfos = null;
         synchronized (bdjoFilesLock) {
             bdjoFiles = null;
@@ -895,5 +897,12 @@ public class Libbluray {
                                               int x0, int y0, int x1, int y1);
 
     private static long nativePointer = 0;
+
+    /* true while shutdown() is stopping Xlets (disc is being closed) */
+    private static volatile boolean shuttingDown = false;
+
+    static boolean isShuttingDown() {
+        return shuttingDown;
+    }
     private static TitleInfo[] titleInfos = null;
 }

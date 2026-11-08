@@ -237,7 +237,7 @@ public class IxcRegistryImpl {
             remoteMethod.callerContext.addIxcThread(remoteThread);
             remoteThread.setDaemon(false);
             remoteThread.start();
-            remoteThread.join();
+            joinRemoteThread(remoteThread);
             remoteMethod.callerContext.removeIxcThread(remoteThread);
 
             if (!remoteMethod.finished) {
@@ -369,6 +369,39 @@ public class IxcRegistryImpl {
     /*
      * debug
      */
+
+    /* max. time a remote call may block disc shutdown before it is interrupted */
+    private static final int SHUTDOWN_CALL_TIMEOUT_MS = 500;
+
+    /*
+     * Wait for a remote call to complete.
+     *
+     * When the disc is being closed all Xlets are going away. Don't let a call
+     * (typically made from destroyXlet() into another Xlet that waits for an
+     * event that never comes) stall shutdown until the STOP / thread kill
+     * timeouts expire. Also covers calls that were already running when
+     * shutdown started.
+     */
+    private static void joinRemoteThread(Thread remoteThread) throws InterruptedException {
+        long deadline = 0;
+        while (remoteThread.isAlive()) {
+            long now = System.currentTimeMillis();
+            if (deadline == 0 && Libbluray.isShuttingDown()) {
+                deadline = now + SHUTDOWN_CALL_TIMEOUT_MS;
+            }
+            if (deadline == 0) {
+                /* normal operation: re-check shutdown state periodically */
+                remoteThread.join(SHUTDOWN_CALL_TIMEOUT_MS);
+            } else if (now < deadline) {
+                remoteThread.join(deadline - now);
+            } else {
+                Debug("invoke(): interrupting remote call during shutdown");
+                remoteThread.interrupt();
+                remoteThread.join(SHUTDOWN_CALL_TIMEOUT_MS);
+                return;
+            }
+        }
+    }
 
     private static final boolean DEBUG = true;
     private static final boolean TRACE = true;
