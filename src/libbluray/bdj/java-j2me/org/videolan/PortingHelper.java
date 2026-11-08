@@ -27,6 +27,10 @@ public class PortingHelper {
     public static void stopThreadGroup(ThreadGroup t) {
     }
 
+    public static boolean cancelTimerThread(Thread t) {
+        return false;
+    }
+
     public static String dumpStack(Thread t) {
         return "";
     }

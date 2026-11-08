@@ -80,6 +80,7 @@ class BDJThreadGroup extends ThreadGroup {
     protected void stopAll(int timeout) {
 
         interrupt();
+        cancelTimers();
         waitForShutdown(timeout, 0);
 
         if (activeCount() > 0) {
@@ -99,6 +100,16 @@ class BDJThreadGroup extends ThreadGroup {
             destroyed = true;
         } catch (IllegalThreadStateException e) {
             logger.error("ThreadGroup destroy failed: " + e);
+        }
+    }
+
+    private void cancelTimers() {
+        Thread[] threads = new Thread[activeCount() + 1];
+        int count = enumerate(threads, true);
+        for (int i = 0; i < count; i++) {
+            if (PortingHelper.cancelTimerThread(threads[i])) {
+                logger.info("cancelled timer thread " + threads[i]);
+            }
         }
     }
 

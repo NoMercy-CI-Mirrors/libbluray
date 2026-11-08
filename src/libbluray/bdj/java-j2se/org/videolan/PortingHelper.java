@@ -19,7 +19,9 @@
 
 package org.videolan;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 public class PortingHelper {
 
@@ -44,6 +46,30 @@ public class PortingHelper {
             // ignore
         } catch (InvocationTargetException e) {
             // ignore
+        }
+    }
+
+    /* java.util.Timer threads ignore interrupt(). Cancel like Timer.cancel(). */
+    public static boolean cancelTimerThread(Thread t) {
+        if (!"java.util.TimerThread".equals(t.getClass().getName())) {
+            return false;
+        }
+        try {
+            Field queueField = t.getClass().getDeclaredField("queue");
+            Field newTasksField = t.getClass().getDeclaredField("newTasksMayBeScheduled");
+            queueField.setAccessible(true);
+            newTasksField.setAccessible(true);
+            Object queue = queueField.get(t);
+            Method clear = queue.getClass().getDeclaredMethod("clear", new Class[0]);
+            clear.setAccessible(true);
+            synchronized (queue) {
+                newTasksField.setBoolean(t, false);
+                clear.invoke(queue, new Object[0]);
+                queue.notify();
+            }
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 
