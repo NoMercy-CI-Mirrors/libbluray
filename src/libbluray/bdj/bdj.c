@@ -920,6 +920,11 @@ static int _create_jvm(void *jvm_lib, const char *java_home, BDJ_CONFIG *cfg,
     option[n++].optionString = str_dup   ("-Xms256M");
     option[n++].optionString = str_dup   ("-Xmx256M");
     option[n++].optionString = str_dup   ("-Xss2048k");
+#ifndef HAVE_BDJ_J2ME
+    /* Leave SIGINT, SIGTERM and SIGHUP to the application. Without -Xrs HotSpot installs its
+     * own handlers and calls exit() from a JVM thread while the application is running. */
+    option[n++].optionString = str_dup   ("-Xrs");
+#endif
 #ifdef HAVE_BDJ_J2ME
     option[n++].optionString = str_printf("-Djava.home=%s", java_home);
     option[n++].optionString = str_printf("-Xbootclasspath/a:%s/lib/xmlparser.jar", java_home);
