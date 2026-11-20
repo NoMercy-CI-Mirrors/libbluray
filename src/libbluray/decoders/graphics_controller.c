@@ -617,6 +617,15 @@ static void _render_composition_object(GRAPHICS_CONTROLLER *gc,
         ov.img     = object->img;
 
         if (cobj->crop_flag) {
+            if (cobj->crop_x + cobj->crop_w > object->width ||
+                cobj->crop_y + cobj->crop_h > object->height) {
+                GC_ERROR("_render_composition_object: cropping rectangle outside of object #%d\n",
+                         object->id);
+                return;
+            }
+            if (!cobj->crop_w || !cobj->crop_h) {
+                return;
+            }
             if (cobj->crop_x || cobj->crop_y || cobj->crop_w != object->width) {
                 cropped_img = rle_crop_object(object->img, object->width,
                                               cobj->crop_x, cobj->crop_y, cobj->crop_w, cobj->crop_h);
