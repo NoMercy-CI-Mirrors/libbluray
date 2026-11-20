@@ -120,12 +120,34 @@ int pg_decode_palette(BITBUFFER *bb, BD_PG_PALETTE *p)
     return pg_decode_palette_update(bb, p);
 }
 
+static int _add_rle(BD_PG_OBJECT *p, int *num_rle, int *rle_size, uint16_t len, uint16_t color)
+{
+    BD_PG_RLE_ELEM *tmp;
+
+    p->img[*num_rle].len   = len;
+    p->img[*num_rle].color = color;
+
+    (*num_rle)++;
+    if (*num_rle >= *rle_size) {
+        *rle_size *= 2;
+        tmp = refcnt_realloc(p->img, *rle_size * sizeof(BD_PG_RLE_ELEM), NULL);
+        if (!tmp) {
+            BD_DEBUG(DBG_DECODE | DBG_CRIT, "pg_decode_object(): realloc failed\n");
+            return 0;
+        }
+        p->img = tmp;
+    }
+
+    return 1;
+}
+
 static int _decode_rle(BITBUFFER *bb, BD_PG_OBJECT *p)
 {
     BD_PG_RLE_ELEM *tmp;
     int64_t pixels_left = (int64_t)p->width * p->height;
     int rle_size        = (int)(pixels_left / 4);
     int num_rle     = 0;
+    unsigned x      = 0;
 
     if (rle_size < 1)
         rle_size = 1;
@@ -161,9 +183,6 @@ static int _decode_rle(BITBUFFER *bb, BD_PG_OBJECT *p)
             }
         }
 
-        p->img[num_rle].len   = len;
-        p->img[num_rle].color = color;
-
         pixels_left -= len;
 
         if (pixels_left < 0) {
@@ -171,15 +190,21 @@ static int _decode_rle(BITBUFFER *bb, BD_PG_OBJECT *p)
             return 0;
         }
 
-        num_rle++;
-        if (num_rle >= rle_size) {
-            rle_size *= 2;
-            tmp = refcnt_realloc(p->img, rle_size * sizeof(BD_PG_RLE_ELEM), NULL);
-            if (!tmp) {
-                BD_DEBUG(DBG_DECODE | DBG_CRIT, "pg_decode_object(): realloc failed\n");
+        while (len > 0) {
+            uint32_t run = BD_MIN(len, p->width - x);
+
+            if (!_add_rle(p, &num_rle, &rle_size, run, color)) {
                 return 0;
             }
-            p->img = tmp;
+            len -= run;
+            x   += run;
+
+            if (x == p->width) {
+                if (!_add_rle(p, &num_rle, &rle_size, 0, 0)) {
+                    return 0;
+                }
+                x = 0;
+            }
         }
     }
 
