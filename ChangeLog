@@ -1,3 +1,17 @@
+2026-12-??: Version 1.5.2
+- BD-J: don't let IXC calls block disc shutdown
+- BD-J: report the requested stereoscopic mode in the video configuration
+- BD-J: cancel leftover Timer threads when stopping an Xlet
+- BD-J: start the JVM with -Xrs
+- BD-J: do not advance getMediaTime() at rate 0
+- BD-J: use a JAR as unsigned when its signature can not be verified
+- BD-J: do not initialize "present" applications when loading a title
+- Check the cropping rectangle of composition objects in the graphics controller
+- Fix RLE decoding of runs crossing line boundaries
+- End button command execution after a link command in the HDMV VM
+- Skip the rest of a clip once PCR has passed the play item OUT time
+- meson: don't map aarch64 to "arm" for JAVA_ARCH
+
 2026-08-31: Version 1.5.1
 - Fix out-of-bounds write in graphics processor on invalid input
 - Fix possible buffer overread when parsing PTS/DTS in m2ts demuxer

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 project('libbluray', 'c',
-    version: '1.5.1',
+    version: '1.5.2',
     subproject_dir: 'contrib',
     default_options: ['buildtype=debugoptimized',
                       'c_std=c99',
